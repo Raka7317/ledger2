@@ -120,6 +120,18 @@
   .hidden{display:none !important;}
   .form-note{grid-column:1/-1; font-size:12px; color:var(--ink-soft); margin-top:-2px;}
   .form-error{grid-column:1/-1; font-size:13px; color:var(--red); display:none;}
+  .extra-toggle-row{grid-column:1/-1; display:flex;}
+  #f-extra{
+    width:100%; padding:10px 11px; border:1px solid var(--border); border-radius:7px;
+    background:var(--surface-alt); font-family:'IBM Plex Sans',sans-serif; font-size:14px; color:var(--ink);
+    resize:vertical;
+  }
+  #f-extra:focus{outline:2px solid var(--gold); outline-offset:1px; background:#fff;}
+  .notes-cell{white-space:pre-wrap; word-break:break-word; max-width:220px; font-size:12.5px; color:var(--ink-soft);}
+  .pending-cell.has-pending{color:var(--red); font-weight:600;}
+  .party-summary{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px;}
+  .party-summary .card .value{font-size:20px;}
+  @media (max-width:1000px){ .party-summary{grid-template-columns:repeat(2,1fr);} }
 
   /* Table */
   .table-tools{display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; align-items:center;}
@@ -296,12 +308,42 @@
           <label for="f-date">Date</label>
           <input type="date" id="f-date" required>
         </div>
+        <div class="field">
+          <label for="f-paid">Amount Paid (₹)</label>
+          <input type="number" id="f-paid" min="0" step="0.01" placeholder="Leave blank if fully paid">
+        </div>
+        <div class="field extra-toggle-row">
+          <button type="button" class="btn-ghost" id="btn-toggle-extra">+ Add Extra Info</button>
+        </div>
+        <div class="field hidden" id="extra-info-wrap" style="grid-column: 1 / -1;">
+          <label for="f-extra">Extra Info (optional — text or numbers, e.g. vehicle no., bag count, remarks)</label>
+          <textarea id="f-extra" rows="3" placeholder="Add any additional details for this transaction..."></textarea>
+        </div>
         <div class="field" style="grid-column: 1 / -1; display:flex; justify-content:flex-end;">
           <button type="submit" class="btn-primary" id="submit-btn" style="min-width:160px;">Add Sale</button>
         </div>
         <div class="form-error" id="form-error"></div>
-        <div class="form-note">Party name, product, price and quantity+unit are mandatory. Quantity is auto-converted to kg for analytics and inventory (1 quintal = 100 kg, 1 gram = 0.001 kg). Every entry gets a unique ID and timestamp automatically.</div>
+        <div class="form-note">Party name, product, price and quantity+unit are mandatory. Quantity is auto-converted to kg for analytics and inventory (1 quintal = 100 kg, 1 gram = 0.001 kg). Amount paid defaults to the full price if left blank (no pending dues); enter a smaller amount to record a partial/credit payment. Every entry gets a unique ID and timestamp automatically.</div>
       </form>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div><span class="eyebrow">Dues</span><h2>Party Ledger — Search &amp; Pending Payments</h2></div>
+    </div>
+    <div class="panel">
+      <div class="table-tools">
+        <input type="text" id="party-search-input" placeholder="Enter customer or supplier name...">
+        <select id="party-search-sort">
+          <option value="asc">Oldest first</option>
+          <option value="desc">Newest first</option>
+        </select>
+        <button class="btn-primary" id="btn-party-search">Search</button>
+      </div>
+      <div id="party-results">
+        <div class="auth-note">Search a party name above to see every transaction with them, sorted by date, along with how much payment is still pending on each one.</div>
+      </div>
     </div>
   </section>
 
@@ -329,11 +371,11 @@
       <table>
         <thead>
           <tr>
-            <th>Date</th><th>Type</th><th>Party</th><th>Product</th><th>Quantity</th><th>Qty (kg)</th><th>Price</th><th>₹ / kg</th><th>ID</th><th></th>
+            <th>Date</th><th>Type</th><th>Party</th><th>Product</th><th>Quantity</th><th>Qty (kg)</th><th>Price</th><th>₹ / kg</th><th>Paid</th><th>Pending</th><th>Notes</th><th>ID</th><th></th>
           </tr>
         </thead>
         <tbody id="tx-tbody">
-          <tr class="empty-row"><td colspan="10">Loading transactions…</td></tr>
+          <tr class="empty-row"><td colspan="13">Loading transactions…</td></tr>
         </tbody>
       </table>
     </div>
