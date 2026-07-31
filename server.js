@@ -143,11 +143,21 @@ app.get('/api/transactions', async (_req, res) => {
 app.post('/api/transactions', requireAdmin, async (req, res) => {
   try {
     await waitForDatabase();
-    const { type, personName, product, price, quantity, unit, date } = req.body;
+    const { type, personName, product, price, quantity, unit, date, originalSupplier, extraInfo } = req.body;
     if (!type || !personName || !product || !unit || !date || !(price >= 0) || !(quantity > 0)) {
       return res.status(400).json({ error: 'Missing or invalid fields.' });
     }
-    const tx = await Transaction.create({ type, personName, product, price, quantity, unit, date });
+    const tx = await Transaction.create({
+      type,
+      personName,
+      product,
+      price,
+      quantity,
+      unit,
+      date,
+      originalSupplier: originalSupplier || '',
+      extraInfo: extraInfo && typeof extraInfo === 'object' ? extraInfo : {}
+    });
     res.status(201).json(tx);
   } catch (err) {
     res.status(503).json({ error: err.message });

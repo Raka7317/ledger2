@@ -8,7 +8,9 @@ const transactionSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 0 },
     quantity: { type: Number, required: true, min: 0.001 },
     unit: { type: String, enum: ['kg', 'quintal', 'gram'], required: true },
-    date: { type: String, required: true } // stored as YYYY-MM-DD to match the frontend's <input type="date">
+    date: { type: String, required: true }, // stored as YYYY-MM-DD to match the frontend's <input type="date">
+    originalSupplier: { type: String, trim: true, default: '' },
+    extraInfo: { type: mongoose.Schema.Types.Mixed, default: {} }
   },
   { timestamps: true }
 );
