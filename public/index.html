@@ -164,6 +164,43 @@
   .breakdown-table th, .breakdown-table td{font-size:13px;}
   .stock-low{color:var(--red); font-weight:600;}
 
+  .party-link{background:none; border:none; padding:0; margin:0; font:inherit; color:var(--gold-deep); text-decoration:underline; text-decoration-style:dotted; cursor:pointer;}
+  .party-link:hover{color:var(--green-deep);}
+
+  .date-range{display:flex; align-items:center; gap:6px; background:var(--surface-alt); border:1px solid var(--border); border-radius:7px; padding:2px 8px;}
+  .date-range span{font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.4px;}
+  .date-range input[type="date"]{border:none; background:transparent; padding:6px 2px; font-size:13px;}
+  .date-range input[type="date"]:focus{outline:none;}
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(42,33,23,0.55); display:flex; align-items:center; justify-content:center;
+    padding:20px; z-index:1000;
+  }
+  .modal-overlay.hidden{display:none !important;}
+  .modal{
+    background:var(--surface); border-radius:var(--radius); border:1px solid var(--border);
+    width:100%; max-width:980px; max-height:88vh; overflow-y:auto; padding:24px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.25);
+  }
+  .modal-header{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:14px;}
+  .modal-header h3{font-size:22px;}
+  .modal-header .eyebrow{font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--gold-deep); font-weight:600; display:block; margin-bottom:2px;}
+  .btn-close{background:transparent; border:1px solid var(--border); color:var(--ink-soft); width:32px; height:32px; padding:0; border-radius:50%; font-size:16px; line-height:1;}
+  .btn-close:hover{border-color:var(--ink-soft); color:var(--ink);}
+  .party-summary-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px;}
+  .party-summary-grid .mini-card{background:var(--surface-alt); border:1px solid var(--border); border-radius:8px; padding:10px 12px;}
+  .party-summary-grid .mini-card .label{font-size:11px; text-transform:uppercase; letter-spacing:0.4px; color:var(--ink-soft); font-weight:600;}
+  .party-summary-grid .mini-card .value{font-family:'Fraunces',serif; font-size:18px; margin-top:3px;}
+  .party-modal-tools{display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+  .extra-info-full{display:flex; flex-direction:column; gap:2px;}
+  .extra-info-full .extra-info-line{font-size:12px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace;}
+  .extra-info-full .extra-info-line b{color:var(--ink); font-weight:600;}
+
+  @media (max-width:700px){
+    .party-summary-grid{grid-template-columns:1fr 1fr;}
+    .modal{padding:16px;}
+  }
+
   footer{text-align:center; font-size:12px; color:var(--ink-soft); margin-top:40px;}
   .toast{
     position:fixed; bottom:20px; right:20px; background:var(--ink); color:#fff; padding:12px 18px;
@@ -314,6 +351,10 @@
           <input type="date" id="f-date" required>
         </div>
         <div class="field" style="grid-column: 1 / -1;">
+          <label for="f-source">Original Supplier <span style="text-transform:none; font-weight:400;">(optional — where this stock originally came from, for sales)</span></label>
+          <input id="f-source" placeholder="e.g. Krishna Traders">
+        </div>
+        <div class="field" style="grid-column: 1 / -1;">
           <button type="button" class="btn-ghost" id="btn-toggle-extra">+ Add Extra Info</button>
           <div id="extra-info-wrap" class="hidden">
             <div id="extra-info-rows"></div>
@@ -347,17 +388,26 @@
           <option value="price-desc">Highest price</option>
           <option value="qty-desc">Highest quantity</option>
         </select>
+        <div class="date-range">
+          <span>From</span>
+          <input type="date" id="filter-date-from">
+        </div>
+        <div class="date-range">
+          <span>To</span>
+          <input type="date" id="filter-date-to">
+        </div>
+        <button class="btn-ghost" id="btn-clear-dates">Clear Dates</button>
         <button class="btn-ghost" id="btn-export">Export CSV</button>
         <button class="btn-ghost" id="btn-refresh">Refresh</button>
       </div>
       <table>
         <thead>
           <tr>
-            <th>Date</th><th>Type</th><th>Party</th><th>Product</th><th>Quantity</th><th>Qty (kg)</th><th>Price</th><th>₹ / kg</th><th>Extra Info</th><th>ID</th><th></th>
+            <th>Date</th><th>Type</th><th>Party</th><th>Product</th><th>Quantity</th><th>Qty (kg)</th><th>Price</th><th>₹ / kg</th><th>Original Supplier</th><th>Extra Info</th><th>ID</th><th></th>
           </tr>
         </thead>
         <tbody id="tx-tbody">
-          <tr class="empty-row"><td colspan="11">Loading transactions…</td></tr>
+          <tr class="empty-row"><td colspan="12">Loading transactions…</td></tr>
         </tbody>
       </table>
     </div>
@@ -413,6 +463,35 @@
 
 <footer>Chawal Ledger — data is stored in MongoDB and shared across everyone using this app.</footer>
 <div class="toast" id="toast"></div>
+
+<div class="modal-overlay hidden" id="party-modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div><span class="eyebrow">Party history</span><h3 id="party-modal-title">—</h3></div>
+      <button class="btn-close" id="party-modal-close" title="Close">×</button>
+    </div>
+    <div class="party-summary-grid" id="party-modal-summary"></div>
+    <div class="party-modal-tools">
+      <div class="date-range">
+        <span>From</span>
+        <input type="date" id="party-date-from">
+      </div>
+      <div class="date-range">
+        <span>To</span>
+        <input type="date" id="party-date-to">
+      </div>
+      <button class="btn-ghost" id="party-clear-dates">Clear Dates</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Type</th><th>Product</th><th>Quantity</th><th>Qty (kg)</th><th>Price</th><th>₹ / kg</th><th>Original Supplier</th><th>Extra Info</th>
+        </tr>
+      </thead>
+      <tbody id="party-modal-tbody"></tbody>
+    </table>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -658,21 +737,28 @@
     tbody.innerHTML = list.map(t=>`<tr>
       <td class="mono">${escapeHtml(t.date)}</td>
       <td><span class="type-badge ${t.type}">${t.type === "sell" ? "Sell" : "Buy"}</span></td>
-      <td>${escapeHtml(t.personName || "â€”")}</td>
+      <td>${t.personName ? `<button type="button" class="party-link" data-party="${escapeHtml(t.personName)}">${escapeHtml(t.personName)}</button>` : "—"}</td>
       <td>${escapeHtml(t.product)}</td>
       <td class="mono">${fmtQty(t)}</td>
       <td class="mono">${fmtMoney(t.price)}</td>
     </tr>`).join("");
+    tbody.querySelectorAll("button[data-party]").forEach(btn=>{
+      btn.addEventListener("click", ()=> openPartyModal(btn.getAttribute("data-party")));
+    });
   }
 
   function getFiltered(){
     const q = document.getElementById("filter-product").value.trim().toLowerCase();
     const type = document.getElementById("filter-type").value;
     const sort = document.getElementById("filter-sort").value;
+    const dateFrom = document.getElementById("filter-date-from").value;
+    const dateTo = document.getElementById("filter-date-to").value;
     let list = transactions.filter(t => {
       const matchesQ = !q || t.product.toLowerCase().includes(q) || (t.personName||"").toLowerCase().includes(q);
       const matchesType = !type || t.type === type;
-      return matchesQ && matchesType;
+      const matchesFrom = !dateFrom || t.date >= dateFrom;
+      const matchesTo = !dateTo || t.date <= dateTo;
+      return matchesQ && matchesType && matchesFrom && matchesTo;
     });
     list.sort((a,b)=>{
       if(sort === "date-desc") return new Date(b.date) - new Date(a.date);
@@ -684,30 +770,43 @@
     return list;
   }
 
+  function extraInfoTags(t){
+    const extraEntries = t.extraInfo ? Object.entries(t.extraInfo) : [];
+    return extraEntries.length
+      ? `<div class="extra-tag-list">${extraEntries.map(([k,v])=>`<span class="extra-tag" title="${escapeHtml(k)}: ${escapeHtml(v)}">${escapeHtml(k)}: ${escapeHtml(v)}</span>`).join("")}</div>`
+      : `<span class="id-cell">—</span>`;
+  }
+
+  function extraInfoFull(t){
+    const extraEntries = t.extraInfo ? Object.entries(t.extraInfo) : [];
+    if(!extraEntries.length) return `<span class="id-cell">—</span>`;
+    return `<div class="extra-info-full">${extraEntries.map(([k,v])=>`<span class="extra-info-line"><b>${escapeHtml(k)}:</b> ${escapeHtml(v)}</span>`).join("")}</div>`;
+  }
+
   function renderTable(){
     const tbody = document.getElementById("tx-tbody");
     const list = getFiltered();
     if(list.length === 0){
-      tbody.innerHTML = `<tr class="empty-row"><td colspan="11">No transactions match — try adding an entry or clearing filters.</td></tr>`;
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="12">No transactions match — try adding an entry or clearing filters.</td></tr>`;
       return;
     }
     tbody.innerHTML = list.map(t=>{
       const perKg = t.qtyKg > 0 ? (t.price / t.qtyKg) : 0;
       const deleteCell = isAdmin() ? `<button class="btn-danger" data-id="${t.id}">Delete</button>` : "";
-      const extraEntries = t.extraInfo ? Object.entries(t.extraInfo) : [];
-      const extraCell = extraEntries.length
-        ? `<div class="extra-tag-list">${extraEntries.map(([k,v])=>`<span class="extra-tag" title="${escapeHtml(k)}: ${escapeHtml(v)}">${escapeHtml(k)}: ${escapeHtml(v)}</span>`).join("")}</div>`
-        : `<span class="id-cell">—</span>`;
+      const partyCell = t.personName
+        ? `<button type="button" class="party-link" data-party="${escapeHtml(t.personName)}">${escapeHtml(t.personName)}</button>`
+        : "—";
       return `<tr>
         <td class="mono">${escapeHtml(t.date)}</td>
         <td><span class="type-badge ${t.type}">${t.type === "sell" ? "Sell" : "Buy"}</span></td>
-        <td>${escapeHtml(t.personName || "—")}</td>
+        <td>${partyCell}</td>
         <td>${escapeHtml(t.product)}</td>
         <td class="mono">${fmtQty(t)}</td>
         <td class="mono"><span class="tag">${fmtKg(t.qtyKg)}</span></td>
         <td class="mono">${fmtMoney(t.price)}</td>
         <td class="mono">${fmtMoney(perKg)}</td>
-        <td>${extraCell}</td>
+        <td>${escapeHtml(t.originalSupplier || "—")}</td>
+        <td>${extraInfoTags(t)}</td>
         <td class="mono id-cell">${escapeHtml((t.id||"").slice(-8))}</td>
         <td>${deleteCell}</td>
       </tr>`;
@@ -715,6 +814,73 @@
     tbody.querySelectorAll("button[data-id]").forEach(btn=>{
       btn.addEventListener("click", onDelete);
     });
+    tbody.querySelectorAll("button[data-party]").forEach(btn=>{
+      btn.addEventListener("click", ()=> openPartyModal(btn.getAttribute("data-party")));
+    });
+  }
+
+  /* ---------- Party history modal ---------- */
+  let currentPartyName = "";
+
+  function getPartyTransactions(){
+    const from = document.getElementById("party-date-from").value;
+    const to = document.getElementById("party-date-to").value;
+    return transactions
+      .filter(t => t.personName === currentPartyName)
+      .filter(t => (!from || t.date >= from) && (!to || t.date <= to))
+      .sort((a,b)=> new Date(b.date) - new Date(a.date));
+  }
+
+  function renderPartyModal(){
+    const list = getPartyTransactions();
+    const tbody = document.getElementById("party-modal-tbody");
+
+    let sellRevenue = 0, buyValue = 0, soldKg = 0, boughtKg = 0;
+    list.forEach(t=>{
+      if(t.type === "sell"){ sellRevenue += Number(t.price)||0; soldKg += Number(t.qtyKg)||0; }
+      else { buyValue += Number(t.price)||0; boughtKg += Number(t.qtyKg)||0; }
+    });
+
+    document.getElementById("party-modal-summary").innerHTML = `
+      <div class="mini-card"><div class="label">Transactions</div><div class="value mono">${list.length}</div></div>
+      <div class="mini-card"><div class="label">Sold To Them (₹)</div><div class="value mono">${fmtMoney(sellRevenue)}</div></div>
+      <div class="mini-card"><div class="label">Bought From Them (₹)</div><div class="value mono">${fmtMoney(buyValue)}</div></div>
+      <div class="mini-card"><div class="label">Net Qty (Sold - Bought)</div><div class="value mono">${fmtKg(soldKg - boughtKg)}</div></div>
+    `;
+
+    if(list.length === 0){
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="9">No transactions for this party in the selected date range.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(t=>{
+      const perKg = t.qtyKg > 0 ? (t.price / t.qtyKg) : 0;
+      return `<tr>
+        <td class="mono">${escapeHtml(t.date)}</td>
+        <td><span class="type-badge ${t.type}">${t.type === "sell" ? "Sell" : "Buy"}</span></td>
+        <td>${escapeHtml(t.product)}</td>
+        <td class="mono">${fmtQty(t)}</td>
+        <td class="mono"><span class="tag">${fmtKg(t.qtyKg)}</span></td>
+        <td class="mono">${fmtMoney(t.price)}</td>
+        <td class="mono">${fmtMoney(perKg)}</td>
+        <td>${escapeHtml(t.originalSupplier || "—")}</td>
+        <td>${extraInfoFull(t)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  function openPartyModal(name){
+    currentPartyName = name;
+    document.getElementById("party-modal-title").textContent = name;
+    document.getElementById("party-date-from").value = "";
+    document.getElementById("party-date-to").value = "";
+    renderPartyModal();
+    document.getElementById("party-modal-overlay").classList.remove("hidden");
+  }
+
+  function closePartyModal(){
+    document.getElementById("party-modal-overlay").classList.add("hidden");
+    currentPartyName = "";
   }
 
   function renderSummary(){
@@ -962,6 +1128,7 @@
     const quantity = parseFloat(document.getElementById("f-qty").value);
     const unit = document.getElementById("f-unit").value;
     const date = document.getElementById("f-date").value;
+    const originalSupplier = document.getElementById("f-source").value.trim();
 
     if(!personName || !product || !(price >= 0) || !(quantity > 0) || !unit || !date){
       showFormError("Please fill in party name, product, price, quantity, unit and date.");
@@ -970,6 +1137,7 @@
 
     const extraInfo = collectExtraInfo();
     const payload = { type: currentType, personName, product, price, quantity, unit, date };
+    if(originalSupplier) payload.originalSupplier = originalSupplier;
     if(Object.keys(extraInfo).length) payload.extraInfo = extraInfo;
 
     const submitBtn = document.getElementById("submit-btn");
@@ -1015,10 +1183,11 @@
   }
 
   function exportCSV(){
-    const rows = [["ID","Type","Party","Date","Product","Quantity","Unit","Quantity (kg)","Price","Price per kg"]];
+    const rows = [["ID","Type","Party","Date","Product","Quantity","Unit","Quantity (kg)","Price","Price per kg","Original Supplier","Extra Info"]];
     getFiltered().forEach(t=>{
       const perKg = t.qtyKg > 0 ? (t.price / t.qtyKg).toFixed(2) : "0";
-      rows.push([t.id, t.type, t.personName, t.date, t.product, t.quantity, t.unit, t.qtyKg.toFixed(3), t.price, perKg]);
+      const extraStr = t.extraInfo ? Object.entries(t.extraInfo).map(([k,v])=>`${k}: ${v}`).join("; ") : "";
+      rows.push([t.id, t.type, t.personName, t.date, t.product, t.quantity, t.unit, t.qtyKg.toFixed(3), t.price, perKg, t.originalSupplier || "", extraStr]);
     });
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type:"text/csv" });
@@ -1037,7 +1206,28 @@
     document.getElementById("filter-product").addEventListener("input", renderTable);
     document.getElementById("filter-type").addEventListener("change", renderTable);
     document.getElementById("filter-sort").addEventListener("change", renderTable);
+    document.getElementById("filter-date-from").addEventListener("change", renderTable);
+    document.getElementById("filter-date-to").addEventListener("change", renderTable);
+    document.getElementById("btn-clear-dates").addEventListener("click", ()=>{
+      document.getElementById("filter-date-from").value = "";
+      document.getElementById("filter-date-to").value = "";
+      renderTable();
+    });
     document.getElementById("btn-export").addEventListener("click", exportCSV);
+    document.getElementById("party-modal-close").addEventListener("click", closePartyModal);
+    document.getElementById("party-modal-overlay").addEventListener("click", (e)=>{
+      if(e.target.id === "party-modal-overlay") closePartyModal();
+    });
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape") closePartyModal();
+    });
+    document.getElementById("party-date-from").addEventListener("change", renderPartyModal);
+    document.getElementById("party-date-to").addEventListener("change", renderPartyModal);
+    document.getElementById("party-clear-dates").addEventListener("click", ()=>{
+      document.getElementById("party-date-from").value = "";
+      document.getElementById("party-date-to").value = "";
+      renderPartyModal();
+    });
     document.getElementById("btn-login").addEventListener("click", onLogin);
     document.getElementById("btn-logout").addEventListener("click", onLogout);
     document.getElementById("btn-toggle-extra").addEventListener("click", toggleExtraInfo);
