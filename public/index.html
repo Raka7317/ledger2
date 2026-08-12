@@ -390,9 +390,11 @@
       });
 
       loadEntries();
+      startIdleTimer();
     }
 
     function showLogin(message) {
+      stopIdleTimer();
       document.getElementById('app-wrap').classList.add('hidden');
       document.getElementById('login-wrap').classList.remove('hidden');
       if (message) {
@@ -402,10 +404,40 @@
       }
     }
 
-    function logout() {
+    function logout(message) {
       localStorage.removeItem('token');
       currentUser = null;
-      showLogin();
+      stopIdleTimer();
+      showLogin(message);
+    }
+
+    // ---------- AUTO-LOGOUT AFTER 10 MIN OF INACTIVITY ----------
+
+    const IDLE_LIMIT_MS = 10 * 60 * 1000; // 10 minutes
+    let idleTimer = null;
+
+    function resetIdleTimer() {
+      if (!currentUser) return; // only runs while logged in
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        logout('Aap 10 minute tak inactive the, isliye automatically logout ho gaye. Dobara login karein.');
+      }, IDLE_LIMIT_MS);
+    }
+
+    let idleListenersAttached = false;
+    function startIdleTimer() {
+      if (!idleListenersAttached) {
+        ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evt => {
+          document.addEventListener(evt, resetIdleTimer, { passive: true });
+        });
+        idleListenersAttached = true;
+      }
+      resetIdleTimer();
+    }
+
+    function stopIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = null;
     }
 
     document.getElementById('login-form').addEventListener('submit', async function (e) {
