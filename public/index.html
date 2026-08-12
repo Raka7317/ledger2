@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rice Mill Book</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { display: flex; height: 100vh; background-color: #f4f6f8; }
+
+    /* Sidebar Layout */
+    .sidebar { width: 240px; background-color: #121e28; color: #fff; padding: 20px; display: flex; flex-direction: column; }
+    .sidebar h2 { font-size: 18px; margin-bottom: 30px; color: #e2a03f; display: flex; align-items: center; gap: 8px; }
+    .nav-btn { background: none; border: none; color: #a3b8cc; text-align: left; padding: 12px; font-size: 15px; cursor: pointer; border-radius: 6px; margin-bottom: 5px; width: 100%; }
+    .nav-btn:hover, .nav-btn.active { background-color: #1f3142; color: #fff; }
+
+    /* Main Content Area */
+    .main-content { flex: 1; padding: 25px; overflow-y: auto; }
+    .header { font-size: 22px; font-weight: bold; margin-bottom: 20px; color: #1a202c; }
+
+    /* Cards Grid */
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .card { background: #fff; padding: 18px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .card p { font-size: 13px; color: #64748b; font-weight: bold; }
+    .card h3 { font-size: 20px; margin-top: 8px; color: #0f172a; }
+
+    /* Form & Section Layout */
+    .content-box { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #334155; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; outline: none; }
+    .btn-submit { background-color: #14452f; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; width: 100%; }
+    .btn-submit:hover { background-color: #0d3020; }
+    .btn-submit:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+    th { background-color: #f8fafc; color: #475569; }
+    .badge-buy { background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 4px; font-size: 12px; }
+    .badge-sell { background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 4px; font-size: 12px; }
+    .del-btn { background: none; border: none; color: #b91c1c; cursor: pointer; font-size: 13px; }
+
+    /* Filter Bar (search + sort) */
+    .filter-bar { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+    .filter-bar input[type="text"] { flex: 1; min-width: 200px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; outline: none; font-size: 14px; }
+    .filter-bar input[type="date"] { padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; outline: none; font-size: 14px; }
+    .filter-bar select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; outline: none; font-size: 14px; background: #fff; cursor: pointer; }
+    .filter-bar input[type="text"]:focus, .filter-bar select:focus, .filter-bar input[type="date"]:focus { border-color: #14452f; }
+
+    .hint-text { font-size: 13px; color: #64748b; margin-top: 4px; }
+    .btn-search { background-color: #14452f; color: #fff; border: none; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-size: 14px; }
+    .btn-search:hover { background-color: #0d3020; }
+    .btn-clear { background-color: #fff; color: #475569; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-size: 14px; }
+    .btn-clear:hover { background-color: #f1f5f9; }
+
+    .ph-summary { display: flex; gap: 20px; flex-wrap: wrap; margin: 15px 0; padding: 12px 15px; background: #f8fafc; border-radius: 6px; font-size: 14px; color: #334155; }
+    .ph-summary strong { color: #0f172a; }
+
+    .hidden { display: none; }
+    .status-msg { font-size: 13px; margin-top: 10px; }
+    .status-msg.error { color: #b91c1c; }
+    .status-msg.ok { color: #15803d; }
+
+    /* Login Screen */
+    .login-wrap { width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; background: #f4f6f8; }
+    .login-box { background: #fff; padding: 35px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 100%; max-width: 340px; }
+    .login-box h2 { margin-bottom: 6px; color: #121e28; display: flex; align-items: center; gap: 8px; }
+    .login-box .sub { font-size: 13px; color: #64748b; margin-bottom: 22px; }
+
+    /* Sidebar user info footer */
+    .sidebar-user { margin-top: auto; padding-top: 15px; border-top: 1px solid #26394a; font-size: 13px; }
+    .sidebar-user .uname { color: #fff; font-weight: bold; }
+    .sidebar-user .role-tag { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+    .role-tag.admin { background: #e2a03f; color: #121e28; }
+    .role-tag.viewer { background: #334155; color: #cbd5e1; }
+    .logout-btn { background: none; border: 1px solid #334155; color: #a3b8cc; padding: 8px; font-size: 13px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; }
+    .logout-btn:hover { background-color: #1f3142; color: #fff; }
+
+    /* Users management page */
+    .users-form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .users-form-row .form-group { flex: 1; min-width: 150px; margin-bottom: 0; }
+    .users-form-row .btn-submit { width: auto; padding: 10px 20px; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div class="login-wrap" id="login-wrap">
+    <div class="login-box">
+      <h2>🌾 Rice Mill Book</h2>
+      <div class="sub">Login karke aage badhein</div>
+      <form id="login-form">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn-submit">Login</button>
+        <div class="status-msg" id="login-status"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP (shown only after successful login) -->
+  <div id="app-wrap" class="hidden" style="display: flex; width: 100%;">
+
+    <!-- Sidebar Nav -->
+    <div class="sidebar">
+      <h2>🌾 Rice Mill Book</h2>
+      <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
+      <button class="nav-btn" onclick="showPage('kharid')">Kharid Entry</button>
+      <button class="nav-btn" onclick="showPage('bikri')">Bikri Entry</button>
+      <button class="nav-btn" onclick="showPage('payment')">Payment</button>
+      <button class="nav-btn hidden" id="nav-users" onclick="showPage('users')">Users (Admin)</button>
+
+      <div class="sidebar-user">
+        <div class="uname" id="sidebar-username">-</div>
+        <span class="role-tag" id="sidebar-role-tag">-</span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Main Content Body -->
+    <div class="main-content">
+
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboard-page">
+      <div class="header">Dashboard</div>
+      <div class="cards-grid">
+        <div class="card">
+          <p>TOTAL KHARID</p>
+          <h3 id="total-kharid">₹0</h3>
+        </div>
+        <div class="card">
+          <p>TOTAL BIKRI</p>
+          <h3 id="total-bikri">₹0</h3>
+        </div>
+        <div class="card">
+          <p>PROFIT / LOSS</p>
+          <h3 id="total-profit">₹0</h3>
+        </div>
+        <div class="card">
+          <p>NET CASH</p>
+          <h3 id="net-cash">₹0</h3>
+        </div>
+      </div>
+
+      <div class="content-box">
+        <h3>Recent Entries</h3>
+        <div class="filter-bar">
+          <input type="text" id="search-name" placeholder="🔍 Party naam se search karein...">
+          <select id="sort-date">
+            <option value="desc">Date: Newest First</option>
+            <option value="asc">Date: Oldest First</option>
+          </select>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Tareekh</th>
+              <th>Type</th>
+              <th>Party</th>
+              <th>Item / Note</th>
+              <th>Amount (₹)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="recent-entries-list">
+            <tr><td colspan="6">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="content-box">
+        <h3>Party History (Date Range Search)</h3>
+        <p class="hint-text">Kisi bhi party ki saari entries (Kharid, Bikri, Payment) do tareekhon ke beech mein dekhein.</p>
+        <div class="filter-bar">
+          <input type="text" id="ph-party" placeholder="Party ka naam likhein...">
+          <input type="date" id="ph-from">
+          <input type="date" id="ph-to">
+          <button type="button" class="btn-search" onclick="searchPartyHistory()">Search Karein</button>
+          <button type="button" class="btn-clear" onclick="clearPartyHistory()">Clear</button>
+        </div>
+        <div class="status-msg" id="ph-status"></div>
+
+        <div id="ph-results" class="hidden">
+          <div class="ph-summary" id="ph-summary"></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Tareekh</th>
+                <th>Type</th>
+                <th>Party</th>
+                <th>Item / Note</th>
+                <th>Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody id="ph-results-list"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- KHARID ENTRY VIEW -->
+    <div id="kharid-page" class="hidden">
+      <div class="header">Kharid Entry (Purchase)</div>
+      <div class="content-box">
+        <form id="buy-form">
+          <div class="form-group">
+            <label>Tareekh</label>
+            <input type="date" id="buy-date" required>
+          </div>
+          <div class="form-group">
+            <label>Party Name</label>
+            <input type="text" id="buy-party" placeholder="Party ka naam" required>
+          </div>
+          <div class="form-group">
+            <label>Item</label>
+            <input type="text" id="buy-item" placeholder="Paddy / Rice" required>
+          </div>
+          <div class="form-group">
+            <label>Amount (₹)</label>
+            <input type="number" id="buy-amount" placeholder="Kutkul amount" required>
+          </div>
+          <button type="submit" class="btn-submit">Save Karein</button>
+          <div class="status-msg" id="buy-status"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- BIKRI ENTRY VIEW -->
+    <div id="bikri-page" class="hidden">
+      <div class="header">Bikri Entry (Sales)</div>
+      <div class="content-box">
+        <form id="sell-form">
+          <div class="form-group">
+            <label>Tareekh</label>
+            <input type="date" id="sell-date" required>
+          </div>
+          <div class="form-group">
+            <label>Party Name</label>
+            <input type="text" id="sell-party" placeholder="Party ka naam" required>
+          </div>
+          <div class="form-group">
+            <label>Item</label>
+            <input type="text" id="sell-item" placeholder="Rice / Bran" required>
+          </div>
+          <div class="form-group">
+            <label>Amount (₹)</label>
+            <input type="number" id="sell-amount" placeholder="Kutkul amount" required>
+          </div>
+          <button type="submit" class="btn-submit">Save Karein</button>
+          <div class="status-msg" id="sell-status"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- PAYMENT ENTRY VIEW -->
+    <div id="payment-page" class="hidden">
+      <div class="header">Payment Entry</div>
+      <div class="content-box">
+        <form id="payment-form">
+          <div class="form-group">
+            <label>Direction</label>
+            <select id="pay-type">
+              <option value="Aaya">Aaya (In)</option>
+              <option value="Gaya">Gaya (Out)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tareekh</label>
+            <input type="date" id="pay-date" required>
+          </div>
+          <div class="form-group">
+            <label>Party Name</label>
+            <input type="text" id="pay-party" placeholder="Party ka naam" required>
+          </div>
+          <div class="form-group">
+            <label>Amount (₹)</label>
+            <input type="number" id="pay-amount" placeholder="Payment Amount" required>
+          </div>
+          <button type="submit" class="btn-submit">Save Karein</button>
+          <div class="status-msg" id="pay-status"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- USERS MANAGEMENT VIEW (admin only) -->
+    <div id="users-page" class="hidden">
+      <div class="header">Users</div>
+      <div class="content-box">
+        <h3>Naya User Banayein</h3>
+        <form id="user-form">
+          <div class="users-form-row">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" id="new-username" placeholder="e.g. munshi1" required>
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="new-password" placeholder="Kam se kam 6 characters" required minlength="6">
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <select id="new-role">
+                <option value="viewer">Viewer (sirf dekh sakta hai)</option>
+                <option value="admin">Admin (add/edit/delete kar sakta hai)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-submit">Banayein</button>
+          </div>
+          <div class="status-msg" id="user-status"></div>
+        </form>
+      </div>
+
+      <div class="content-box">
+        <h3>Sab Users</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Bana Hua</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="users-list">
+            <tr><td colspan="4">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    </div>
+    <!-- /main-content -->
+  </div>
+  <!-- /app-wrap -->
+
+  <script>
+    // Same-origin API base. Works both locally (server.js serves this file)
+    // and once deployed, since frontend + backend are served from one app.
+    const API_BASE = '/api/entries';
+    const AUTH_BASE = '/api/auth';
+
+    let entries = [];
+    let currentUser = null; // { id, username, role } once logged in
+
+    // ---------- AUTH HELPERS ----------
+
+    // Wrapper around fetch() that automatically attaches the JWT and
+    // logs the user out if the server says the session is invalid/expired.
+    async function apiFetch(url, options = {}) {
+      const token = localStorage.getItem('token');
+      const headers = { ...(options.headers || {}) };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(url, { ...options, headers });
+      if (res.status === 401) {
+        logout();
+        throw new Error('Session khatam ho gaya. Dobara login karein.');
+      }
+      return res;
+    }
+
+    function isAdmin() {
+      return currentUser && currentUser.role === 'admin';
+    }
+
+    function showApp() {
+      document.getElementById('login-wrap').classList.add('hidden');
+      document.getElementById('app-wrap').classList.remove('hidden');
+      document.getElementById('app-wrap').style.display = 'flex';
+
+      document.getElementById('sidebar-username').textContent = currentUser.username;
+      const roleTag = document.getElementById('sidebar-role-tag');
+      roleTag.textContent = currentUser.role === 'admin' ? 'ADMIN' : 'VIEWER';
+      roleTag.className = 'role-tag ' + currentUser.role;
+
+      // Only admins can add/edit entries or manage users
+      document.getElementById('nav-users').classList.toggle('hidden', !isAdmin());
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const target = btn.getAttribute('onclick') || '';
+        if (target.includes("'kharid'") || target.includes("'bikri'") || target.includes("'payment'")) {
+          btn.classList.toggle('hidden', !isAdmin());
+        }
+      });
+
+      loadEntries();
+    }
+
+    function showLogin(message) {
+      document.getElementById('app-wrap').classList.add('hidden');
+      document.getElementById('app-wrap').style.display = 'none';
+      document.getElementById('login-wrap').classList.remove('hidden');
+      if (message) {
+        const statusEl = document.getElementById('login-status');
+        statusEl.textContent = message;
+        statusEl.className = 'status-msg error';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      currentUser = null;
+      showLogin();
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const statusEl = document.getElementById('login-status');
+      const submitBtn = this.querySelector('.btn-submit');
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      submitBtn.disabled = true;
+      statusEl.textContent = 'Logging in...';
+      statusEl.className = 'status-msg';
+
+      try {
+        const res = await fetch(`${AUTH_BASE}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+
+        localStorage.setItem('token', data.token);
+        currentUser = data.user;
+        statusEl.textContent = '';
+        this.reset();
+        showApp();
+      } catch (err) {
+        statusEl.textContent = err.message;
+        statusEl.className = 'status-msg error';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    // On page load: if a token is saved, validate it against the server
+    // before showing the app (handles expired/tampered tokens gracefully).
+    async function initAuth() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showLogin();
+        return;
+      }
+      try {
+        const res = await apiFetch(`${AUTH_BASE}/me`);
+        if (!res.ok) throw new Error('invalid session');
+        const data = await res.json();
+        currentUser = data.user;
+        showApp();
+      } catch (err) {
+        logout();
+      }
+    }
+
+    // ---------- NAVIGATION ----------
+
+    function showPage(pageName) {
+      document.getElementById('dashboard-page').classList.add('hidden');
+      document.getElementById('kharid-page').classList.add('hidden');
+      document.getElementById('bikri-page').classList.add('hidden');
+      document.getElementById('payment-page').classList.add('hidden');
+      document.getElementById('users-page').classList.add('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById(pageName + '-page').classList.remove('hidden');
+      if (event && event.target) event.target.classList.add('active');
+
+      if (pageName === 'dashboard') loadEntries();
+      if (pageName === 'users') loadUsers();
+    }
+
+    // ---------- ENTRIES ----------
+
+    async function loadEntries() {
+      const list = document.getElementById('recent-entries-list');
+      try {
+        const res = await apiFetch(API_BASE);
+        if (!res.ok) throw new Error('Failed to load entries');
+        entries = await res.json();
+        renderDashboard();
+      } catch (err) {
+        list.innerHTML = `<tr><td colspan="6">Could not load data. Check your connection / server.</td></tr>`;
+        console.error(err);
+      }
+    }
+
+    async function createEntry(entry, statusElId, formEl) {
+      const statusEl = document.getElementById(statusElId);
+      const submitBtn = formEl.querySelector('.btn-submit');
+      submitBtn.disabled = true;
+      statusEl.textContent = 'Saving...';
+      statusEl.className = 'status-msg';
+      try {
+        const res = await apiFetch(API_BASE, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(entry)
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || 'Save failed');
+        }
+        statusEl.textContent = 'Saved!';
+        statusEl.className = 'status-msg ok';
+        formEl.reset();
+        document.querySelectorAll('input[type="date"]').forEach(inp => {
+          if (inp.id !== 'ph-from' && inp.id !== 'ph-to') inp.valueAsDate = new Date();
+        });
+      } catch (err) {
+        statusEl.textContent = err.message;
+        statusEl.className = 'status-msg error';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    async function deleteEntry(id) {
+      if (!confirm('Delete this entry?')) return;
+      try {
+        const res = await apiFetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Delete failed');
+        loadEntries();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Kharid Form Save
+    document.getElementById('buy-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const entry = {
+        type: 'Kharid',
+        date: document.getElementById('buy-date').value,
+        party: document.getElementById('buy-party').value,
+        item: document.getElementById('buy-item').value,
+        amount: parseFloat(document.getElementById('buy-amount').value)
+      };
+      createEntry(entry, 'buy-status', this);
+    });
+
+    // Bikri Form Save
+    document.getElementById('sell-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const entry = {
+        type: 'Bikri',
+        date: document.getElementById('sell-date').value,
+        party: document.getElementById('sell-party').value,
+        item: document.getElementById('sell-item').value,
+        amount: parseFloat(document.getElementById('sell-amount').value)
+      };
+      createEntry(entry, 'sell-status', this);
+    });
+
+    // Payment Form Save
+    document.getElementById('payment-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const payType = document.getElementById('pay-type').value;
+      const entry = {
+        type: payType === 'Aaya' ? 'Payment In' : 'Payment Out',
+        date: document.getElementById('pay-date').value,
+        party: document.getElementById('pay-party').value,
+        item: payType === 'Aaya' ? 'Cash Received' : 'Cash Paid',
+        amount: parseFloat(document.getElementById('pay-amount').value)
+      };
+      createEntry(entry, 'pay-status', this);
+    });
+
+    function renderDashboard() {
+      // Totals are always calculated from the FULL entry list,
+      // regardless of any active search/sort applied to the table below.
+      let totalKharid = 0;
+      let totalBikri = 0;
+      let payIn = 0;
+      let payOut = 0;
+
+      entries.forEach(item => {
+        if (item.type === 'Kharid') totalKharid += item.amount;
+        if (item.type === 'Bikri') totalBikri += item.amount;
+        if (item.type === 'Payment In') payIn += item.amount;
+        if (item.type === 'Payment Out') payOut += item.amount;
+      });
+
+      document.getElementById('total-kharid').innerText = '₹' + totalKharid.toLocaleString('en-IN');
+      document.getElementById('total-bikri').innerText = '₹' + totalBikri.toLocaleString('en-IN');
+      document.getElementById('total-profit').innerText = '₹' + (totalBikri - totalKharid).toLocaleString('en-IN');
+      document.getElementById('net-cash').innerText = '₹' + (payIn - payOut).toLocaleString('en-IN');
+
+      renderEntriesTable();
+    }
+
+    // Filters entries by party name search + sorts by date, then draws the table
+    function renderEntriesTable() {
+      const list = document.getElementById('recent-entries-list');
+      const searchTerm = document.getElementById('search-name').value.trim().toLowerCase();
+      const sortOrder = document.getElementById('sort-date').value; // 'asc' or 'desc'
+
+      let filtered = entries;
+      if (searchTerm) {
+        filtered = filtered.filter(item =>
+          (item.party || '').toLowerCase().includes(searchTerm)
+        );
+      }
+
+      // Sort by date without mutating the original entries array
+      filtered = [...filtered].sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      });
+
+      list.innerHTML = '';
+
+      if (filtered.length === 0) {
+        const msg = searchTerm ? 'Is naam se koi entry nahi mili.' : 'Koi entry nahi hai abhi.';
+        list.innerHTML = `<tr><td colspan="6">${msg}</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const row = document.createElement('tr');
+        const badgeClass = (item.type === 'Kharid' || item.type === 'Payment Out') ? 'badge-sell' : 'badge-buy';
+        const deleteCell = isAdmin()
+          ? `<td><button class="del-btn" onclick="deleteEntry('${item._id}')">Delete</button></td>`
+          : `<td></td>`;
+        row.innerHTML = `
+          <td>${item.date}</td>
+          <td><span class="${badgeClass}">${item.type}</span></td>
+          <td>${item.party}</td>
+          <td>${item.item || ''}</td>
+          <td>₹${item.amount.toLocaleString('en-IN')}</td>
+          ${deleteCell}
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    // Re-render table (not totals) whenever search text or sort order changes
+    document.getElementById('search-name').addEventListener('input', renderEntriesTable);
+    document.getElementById('sort-date').addEventListener('change', renderEntriesTable);
+
+    // Searches ALL entries for one party, restricted to a from/to date range (both inclusive).
+    function searchPartyHistory() {
+      const statusEl = document.getElementById('ph-status');
+      const resultsBox = document.getElementById('ph-results');
+      const resultsList = document.getElementById('ph-results-list');
+      const summaryEl = document.getElementById('ph-summary');
+
+      const partyTerm = document.getElementById('ph-party').value.trim().toLowerCase();
+      const fromVal = document.getElementById('ph-from').value; // yyyy-mm-dd or ''
+      const toVal = document.getElementById('ph-to').value;     // yyyy-mm-dd or ''
+
+      statusEl.textContent = '';
+      statusEl.className = 'status-msg';
+
+      if (!partyTerm) {
+        statusEl.textContent = 'Party ka naam likhein.';
+        statusEl.className = 'status-msg error';
+        resultsBox.classList.add('hidden');
+        return;
+      }
+
+      if (fromVal && toVal && new Date(fromVal) > new Date(toVal)) {
+        statusEl.textContent = '"From" date "To" date se pehle honi chahiye.';
+        statusEl.className = 'status-msg error';
+        resultsBox.classList.add('hidden');
+        return;
+      }
+
+      const fromDate = fromVal ? new Date(fromVal) : null;
+      const toDate = toVal ? new Date(toVal) : null;
+
+      let results = entries.filter(item => {
+        const matchesParty = (item.party || '').toLowerCase().includes(partyTerm);
+        if (!matchesParty) return false;
+
+        const itemDate = new Date(item.date);
+        if (fromDate && itemDate < fromDate) return false;
+        if (toDate && itemDate > toDate) return false;
+        return true;
+      });
+
+      // Newest first
+      results = results.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      resultsList.innerHTML = '';
+
+      if (results.length === 0) {
+        statusEl.textContent = 'Is party ki is date range mein koi entry nahi mili.';
+        statusEl.className = 'status-msg error';
+        resultsBox.classList.add('hidden');
+        return;
+      }
+
+      let kharidTotal = 0, bikriTotal = 0, payInTotal = 0, payOutTotal = 0;
+
+      results.forEach(item => {
+        if (item.type === 'Kharid') kharidTotal += item.amount;
+        if (item.type === 'Bikri') bikriTotal += item.amount;
+        if (item.type === 'Payment In') payInTotal += item.amount;
+        if (item.type === 'Payment Out') payOutTotal += item.amount;
+
+        const row = document.createElement('tr');
+        const badgeClass = (item.type === 'Kharid' || item.type === 'Payment Out') ? 'badge-sell' : 'badge-buy';
+        row.innerHTML = `
+          <td>${item.date}</td>
+          <td><span class="${badgeClass}">${item.type}</span></td>
+          <td>${item.party}</td>
+          <td>${item.item || ''}</td>
+          <td>₹${item.amount.toLocaleString('en-IN')}</td>
+        `;
+        resultsList.appendChild(row);
+      });
+
+      summaryEl.innerHTML = `
+        <span>Total Entries: <strong>${results.length}</strong></span>
+        <span>Kharid: <strong>₹${kharidTotal.toLocaleString('en-IN')}</strong></span>
+        <span>Bikri: <strong>₹${bikriTotal.toLocaleString('en-IN')}</strong></span>
+        <span>Payment In: <strong>₹${payInTotal.toLocaleString('en-IN')}</strong></span>
+        <span>Payment Out: <strong>₹${payOutTotal.toLocaleString('en-IN')}</strong></span>
+      `;
+
+      resultsBox.classList.remove('hidden');
+      statusEl.textContent = `${results.length} entries mili.`;
+      statusEl.className = 'status-msg ok';
+    }
+
+    // Resets the party history search form and hides its results
+    function clearPartyHistory() {
+      document.getElementById('ph-party').value = '';
+      document.getElementById('ph-from').value = '';
+      document.getElementById('ph-to').value = '';
+      document.getElementById('ph-status').textContent = '';
+      document.getElementById('ph-status').className = 'status-msg';
+      document.getElementById('ph-results').classList.add('hidden');
+    }
+
+    // ---------- USERS MANAGEMENT (admin only) ----------
+
+    async function loadUsers() {
+      const list = document.getElementById('users-list');
+      try {
+        const res = await apiFetch(`${AUTH_BASE}/users`);
+        if (!res.ok) throw new Error('Failed to load users');
+        const users = await res.json();
+
+        list.innerHTML = '';
+        if (users.length === 0) {
+          list.innerHTML = `<tr><td colspan="4">Koi users nahi hain.</td></tr>`;
+          return;
+        }
+
+        users.forEach(u => {
+          const row = document.createElement('tr');
+          const roleClass = u.role === 'admin' ? 'badge-buy' : 'badge-sell';
+          const createdAt = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-IN') : '';
+          const canDelete = currentUser && u._id !== currentUser.id;
+          row.innerHTML = `
+            <td>${u.username}</td>
+            <td><span class="${roleClass}">${u.role.toUpperCase()}</span></td>
+            <td>${createdAt}</td>
+            <td>${canDelete ? `<button class="del-btn" onclick="deleteUser('${u._id}')">Delete</button>` : ''}</td>
+          `;
+          list.appendChild(row);
+        });
+      } catch (err) {
+        list.innerHTML = `<tr><td colspan="4">Could not load users.</td></tr>`;
+        console.error(err);
+      }
+    }
+
+    document.getElementById('user-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const statusEl = document.getElementById('user-status');
+      const submitBtn = this.querySelector('.btn-submit');
+      const username = document.getElementById('new-username').value.trim();
+      const password = document.getElementById('new-password').value;
+      const role = document.getElementById('new-role').value;
+
+      submitBtn.disabled = true;
+      statusEl.textContent = 'Saving...';
+      statusEl.className = 'status-msg';
+
+      try {
+        const res = await apiFetch(`${AUTH_BASE}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, role })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not create user');
+
+        statusEl.textContent = `User "${data.username}" ban gaya!`;
+        statusEl.className = 'status-msg ok';
+        this.reset();
+        loadUsers();
+      } catch (err) {
+        statusEl.textContent = err.message;
+        statusEl.className = 'status-msg error';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    async function deleteUser(id) {
+      if (!confirm('Is user ko delete karein?')) return;
+      try {
+        const res = await apiFetch(`${AUTH_BASE}/users/${id}`, { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Delete failed');
+        loadUsers();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Default Date auto-fill (skip the Party History range pickers - they should start empty)
+    document.querySelectorAll('input[type="date"]').forEach(inp => {
+      if (inp.id !== 'ph-from' && inp.id !== 'ph-to') inp.valueAsDate = new Date();
+    });
+
+    // Boot the app: check for a saved login session before showing anything
+    initAuth();
+  </script>
+</body>
+</html>
