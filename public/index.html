@@ -57,7 +57,8 @@
     .ph-summary { display: flex; gap: 20px; flex-wrap: wrap; margin: 15px 0; padding: 12px 15px; background: #f8fafc; border-radius: 6px; font-size: 14px; color: #334155; }
     .ph-summary strong { color: #0f172a; }
 
-    .hidden { display: none; }
+    .hidden { display: none !important; }
+    .app-wrap-flex { display: flex; width: 100%; }
     .status-msg { font-size: 13px; margin-top: 10px; }
     .status-msg.error { color: #b91c1c; }
     .status-msg.ok { color: #15803d; }
@@ -106,7 +107,7 @@
   </div>
 
   <!-- MAIN APP (shown only after successful login) -->
-  <div id="app-wrap" class="hidden" style="display: flex; width: 100%;">
+  <div id="app-wrap" class="hidden app-wrap-flex">
 
     <!-- Sidebar Nav -->
     <div class="sidebar">
@@ -373,7 +374,6 @@
     function showApp() {
       document.getElementById('login-wrap').classList.add('hidden');
       document.getElementById('app-wrap').classList.remove('hidden');
-      document.getElementById('app-wrap').style.display = 'flex';
 
       document.getElementById('sidebar-username').textContent = currentUser.username;
       const roleTag = document.getElementById('sidebar-role-tag');
@@ -394,7 +394,6 @@
 
     function showLogin(message) {
       document.getElementById('app-wrap').classList.add('hidden');
-      document.getElementById('app-wrap').style.display = 'none';
       document.getElementById('login-wrap').classList.remove('hidden');
       if (message) {
         const statusEl = document.getElementById('login-status');
