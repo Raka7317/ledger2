@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 // POST /api/entries -> create new entry (admin only)
 router.post('/', requireAdmin, async (req, res) => {
   try {
-    const { type, date, party, item, amount } = req.body;
+    const { type, date, party, address, item, remark, amount } = req.body;
 
     if (!type || !date || !party || amount === undefined || amount === null) {
       return res.status(400).json({ error: 'type, date, party and amount are required' });
@@ -28,7 +28,7 @@ router.post('/', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'amount must be a number' });
     }
 
-    const entry = new Entry({ type, date, party, item, amount: Number(amount) });
+    const entry = new Entry({ type, date, party, address, item, remark, amount: Number(amount) });
     await entry.save();
     res.status(201).json(entry);
   } catch (err) {

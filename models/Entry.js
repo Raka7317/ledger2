@@ -9,7 +9,9 @@ const entrySchema = new mongoose.Schema(
     },
     date: { type: String, required: true },      // yyyy-mm-dd from <input type="date">
     party: { type: String, required: true, trim: true },
+    address: { type: String, default: '', trim: true },
     item: { type: String, default: '', trim: true },
+    remark: { type: String, default: '', trim: true },
     amount: { type: Number, required: true }
   },
   { timestamps: true }
