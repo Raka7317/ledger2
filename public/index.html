@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rice Mill Book</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
     body { display: flex; height: 100vh; background-color: #f4f6f8; }
@@ -53,6 +54,8 @@
     .btn-search:hover { background-color: #0d3020; }
     .btn-clear { background-color: #fff; color: #475569; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-size: 14px; }
     .btn-clear:hover { background-color: #f1f5f9; }
+    .btn-pdf { background-color: #b91c1c; color: #fff; border: none; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-size: 14px; }
+    .btn-pdf:hover { background-color: #991b1b; }
 
     .ph-summary { display: flex; gap: 20px; flex-wrap: wrap; margin: 15px 0; padding: 12px 15px; background: #f8fafc; border-radius: 6px; font-size: 14px; color: #334155; }
     .ph-summary strong { color: #0f172a; }
@@ -158,6 +161,7 @@
             <option value="desc">Date: Newest First</option>
             <option value="asc">Date: Oldest First</option>
           </select>
+          <button type="button" class="btn-pdf" onclick="downloadAllTransactionsPdf()">Download All PDF</button>
         </div>
         <table>
           <thead>
@@ -192,6 +196,7 @@
 
         <div id="ph-results" class="hidden">
           <div class="ph-summary" id="ph-summary"></div>
+          <button type="button" class="btn-pdf" onclick="downloadPartyHistoryPdf()">Download Party PDF</button>
           <table>
             <thead>
               <tr>
@@ -376,6 +381,7 @@
     const AUTH_BASE = '/api/auth';
 
     let entries = [];
+    let lastPartyHistory = null;
     let currentUser = null; // { id, username, role } once logged in
 
     // ---------- AUTH HELPERS ----------
@@ -663,6 +669,110 @@
       renderEntriesTable();
     }
 
+    function downloadAllTransactionsPdf() {
+      const sortedEntries = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
+      if (sortedEntries.length === 0) {
+        alert('PDF banane ke liye koi transaction nahi hai.');
+        return;
+      }
+      createTransactionsPdf('All Transactions', sortedEntries, 'all-transactions');
+    }
+
+    function downloadPartyHistoryPdf() {
+      if (!lastPartyHistory || lastPartyHistory.results.length === 0) {
+        alert('Pehle party history search karein.');
+        return;
+      }
+      const { party, from, to, results } = lastPartyHistory;
+      const dateText = `${from || 'Beginning'} to ${to || 'Today'}`;
+      createTransactionsPdf(`Party History: ${party}`, results, `party-${party.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`, dateText);
+    }
+
+    function createTransactionsPdf(title, transactionList, fileName, dateText = '') {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert('PDF library load nahi hui. Internet connection check karke page refresh karein.');
+        return;
+      }
+
+      const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 10;
+      const columns = [
+        { label: 'Date', width: 25 },
+        { label: 'Type', width: 32 },
+        { label: 'Party', width: 40 },
+        { label: 'Address', width: 50 },
+        { label: 'Item / Note', width: 40 },
+        { label: 'Remark', width: 50 },
+        { label: 'Amount (Rs.)', width: 30 }
+      ];
+      const tableWidth = columns.reduce((total, column) => total + column.width, 0);
+      let y = 13;
+
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text(title, margin, y);
+      y += 7;
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+      doc.text(`Generated: ${new Date().toLocaleDateString('en-IN')}${dateText ? ` | Date range: ${dateText}` : ''}`, margin, y);
+      y += 8;
+
+      function drawHeader() {
+        doc.setFillColor(20, 69, 47);
+        doc.setTextColor(255, 255, 255);
+        doc.rect(margin, y, tableWidth, 8, 'F');
+        let x = margin;
+        doc.setFont(undefined, 'bold');
+        columns.forEach(column => {
+          doc.text(column.label, x + 2, y + 5.5);
+          x += column.width;
+        });
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(0, 0, 0);
+        y += 8;
+      }
+
+      drawHeader();
+      transactionList.forEach((item, index) => {
+        const values = [
+          item.date || '',
+          item.type || '',
+          item.party || '',
+          item.address || '',
+          item.item || '',
+          item.remark || '',
+          Number(item.amount || 0).toLocaleString('en-IN')
+        ];
+        const lines = values.map((value, columnIndex) =>
+          doc.splitTextToSize(String(value), columns[columnIndex].width - 4)
+        );
+        const rowHeight = Math.max(...lines.map(value => value.length), 1) * 4.5 + 3;
+
+        if (y + rowHeight > pageHeight - 10) {
+          doc.addPage();
+          y = 13;
+          drawHeader();
+        }
+
+        if (index % 2 === 0) {
+          doc.setFillColor(245, 248, 246);
+          doc.rect(margin, y, tableWidth, rowHeight, 'F');
+        }
+        let x = margin;
+        lines.forEach((value, columnIndex) => {
+          doc.text(value, x + 2, y + 4.5);
+          x += columns[columnIndex].width;
+        });
+        doc.setDrawColor(220, 226, 222);
+        doc.line(margin, y + rowHeight, margin + tableWidth, y + rowHeight);
+        y += rowHeight;
+      });
+
+      doc.save(`${fileName}-${new Date().toISOString().slice(0, 10)}.pdf`);
+    }
+
     // Filters entries by party name search + sorts by date, then draws the table
     function renderEntriesTable() {
       const list = document.getElementById('recent-entries-list');
@@ -730,6 +840,7 @@
       statusEl.className = 'status-msg';
 
       if (!partyTerm) {
+        lastPartyHistory = null;
         statusEl.textContent = 'Party ka naam likhein.';
         statusEl.className = 'status-msg error';
         resultsBox.classList.add('hidden');
@@ -737,6 +848,7 @@
       }
 
       if (fromVal && toVal && new Date(fromVal) > new Date(toVal)) {
+        lastPartyHistory = null;
         statusEl.textContent = '"From" date "To" date se pehle honi chahiye.';
         statusEl.className = 'status-msg error';
         resultsBox.classList.add('hidden');
@@ -762,11 +874,14 @@
       resultsList.innerHTML = '';
 
       if (results.length === 0) {
+        lastPartyHistory = null;
         statusEl.textContent = 'Is party ki is date range mein koi entry nahi mili.';
         statusEl.className = 'status-msg error';
         resultsBox.classList.add('hidden');
         return;
       }
+
+      lastPartyHistory = { party: partyTerm, from: fromVal, to: toVal, results };
 
       let kharidTotal = 0, bikriTotal = 0, payInTotal = 0, payOutTotal = 0;
 
@@ -808,6 +923,7 @@
       document.getElementById('ph-party').value = '';
       document.getElementById('ph-from').value = '';
       document.getElementById('ph-to').value = '';
+      lastPartyHistory = null;
       document.getElementById('ph-status').textContent = '';
       document.getElementById('ph-status').className = 'status-msg';
       document.getElementById('ph-results').classList.add('hidden');
