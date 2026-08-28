@@ -85,6 +85,43 @@
     .users-form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
     .users-form-row .form-group { flex: 1; min-width: 150px; margin-bottom: 0; }
     .users-form-row .btn-submit { width: auto; padding: 10px 20px; white-space: nowrap; }
+    .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-wrap table { min-width: 760px; }
+    .users-table table { min-width: 420px; }
+
+    @media (max-width: 768px) {
+      body { display: block; min-height: 100vh; height: auto; }
+      .app-wrap-flex { display: block; min-height: 100vh; }
+      .sidebar { width: 100%; padding: 14px; }
+      .sidebar h2 { margin-bottom: 12px; }
+      .nav-btn { display: inline-block; width: auto; margin: 0 4px 4px 0; padding: 9px 10px; font-size: 14px; }
+      .sidebar-user { margin-top: 10px; padding-top: 10px; }
+      .logout-btn { width: auto; float: right; margin-top: -25px; padding: 6px 12px; }
+      .main-content { padding: 14px; overflow: visible; }
+      .header { font-size: 20px; margin-bottom: 14px; }
+      .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+      .card { padding: 13px; }
+      .card p { font-size: 11px; }
+      .card h3 { font-size: 18px; }
+      .content-box { padding: 14px; margin-bottom: 14px; }
+      .filter-bar { align-items: stretch; }
+      .filter-bar input[type="text"], .filter-bar input[type="date"], .filter-bar select,
+      .filter-bar .btn-search, .filter-bar .btn-clear, .filter-bar .btn-pdf { width: 100%; min-width: 0; }
+      .filter-bar input[type="text"] { flex-basis: 100%; }
+      .users-form-row { display: block; }
+      .users-form-row .form-group { min-width: 0; margin-bottom: 15px; }
+      .users-form-row .btn-submit { width: 100%; }
+      .login-box { margin: 14px; padding: 25px; }
+    }
+
+    @media (max-width: 380px) {
+      .main-content { padding: 10px; }
+      .content-box { padding: 11px; }
+      .cards-grid { gap: 7px; }
+      .card { padding: 10px; }
+      .card h3 { font-size: 16px; }
+      .nav-btn { font-size: 13px; padding: 8px; }
+    }
   </style>
 </head>
 <body>
@@ -163,6 +200,7 @@
           </select>
           <button type="button" class="btn-pdf" onclick="downloadAllTransactionsPdf()">Download All PDF</button>
         </div>
+        <div class="table-wrap">
         <table>
           <thead>
             <tr>
@@ -180,6 +218,7 @@
             <tr><td colspan="8">Loading...</td></tr>
           </tbody>
         </table>
+        </div>
       </div>
 
       <div class="content-box">
@@ -197,6 +236,7 @@
         <div id="ph-results" class="hidden">
           <div class="ph-summary" id="ph-summary"></div>
           <button type="button" class="btn-pdf" onclick="downloadPartyHistoryPdf()">Download Party PDF</button>
+          <div class="table-wrap">
           <table>
             <thead>
               <tr>
@@ -211,6 +251,7 @@
             </thead>
             <tbody id="ph-results-list"></tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>
@@ -353,6 +394,7 @@
 
       <div class="content-box">
         <h3>Sab Users</h3>
+        <div class="table-wrap users-table">
         <table>
           <thead>
             <tr>
@@ -366,6 +408,7 @@
             <tr><td colspan="4">Loading...</td></tr>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
 
